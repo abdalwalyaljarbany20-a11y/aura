@@ -22,3 +22,6 @@ data/
 # Old / broken local Python environments (never commit)
 venv/
 .venv-*/
+
+# Documentation kept locally only (removed from GitHub)
+docs/
