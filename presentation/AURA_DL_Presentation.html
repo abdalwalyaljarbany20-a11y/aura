@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AURA VISION · التعلم العميق</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#03050d; --bg2:#070b1c; --ink:#e8f1ff; --dim:#8ea3c7; --mute:#56688c;
+  --c1:#22e6ff; --c2:#8a5cff; --c3:#ff3dcb; --ok:#3dffa8; --warn:#ffc94d; --bad:#ff5a7a;
+  --glass:rgba(120,160,255,.06); --line:rgba(120,190,255,.18);
+  --ar:'Cairo','Segoe UI',Tahoma,sans-serif; --tech:'Orbitron','Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--ar);overflow:hidden}
+body{background:radial-gradient(1200px 700px at 80% -10%,#1a1450 0%,transparent 60%),radial-gradient(900px 600px at 0% 110%,#05304a 0%,transparent 60%),var(--bg)}
+#bg{position:fixed;inset:0;z-index:0}
+.grid-floor{position:fixed;left:-50%;right:-50%;bottom:-10vh;height:55vh;z-index:0;pointer-events:none;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:60px 60px;transform:perspective(500px) rotateX(70deg);transform-origin:bottom;
+  mask-image:linear-gradient(to top,#000 10%,transparent 85%);-webkit-mask-image:linear-gradient(to top,#000 10%,transparent 85%);
+  animation:floor 6s linear infinite;opacity:.55}
+@keyframes floor{to{background-position:0 60px}}
+.scan{position:fixed;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px)}
+
+/* HUD */
+.hud{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:14px 28px;font-family:var(--tech);font-size:12px;letter-spacing:.18em;color:var(--dim)}
+.hud b{color:var(--c1);font-weight:700}
+.hud .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);margin-inline-start:8px;animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.25}}
+.progress{position:fixed;top:0;right:0;height:3px;z-index:21;background:linear-gradient(270deg,var(--c1),var(--c2),var(--c3));box-shadow:0 0 14px var(--c1);transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.nav{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:10px;align-items:center}
+.nav button{font-family:var(--tech);background:var(--glass);border:1px solid var(--line);color:var(--ink);width:46px;height:46px;border-radius:14px;cursor:pointer;font-size:18px;backdrop-filter:blur(10px);transition:.25s}
+.nav button:hover{border-color:var(--c1);box-shadow:0 0 18px rgba(34,230,255,.35);color:var(--c1)}
+.nav .count{direction:ltr;font-family:var(--tech);font-size:13px;color:var(--dim);min-width:84px;text-align:center;letter-spacing:.15em}
+.hint{position:fixed;bottom:30px;right:28px;z-index:20;font-size:12px;color:var(--mute)}
+.hint kbd{font-family:var(--tech);border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin:0 2px;color:var(--dim)}
+
+/* slides */
+.deck{position:fixed;inset:0;z-index:5;perspective:1400px}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:84px 7vw 96px;
+  opacity:0;pointer-events:none;transform:translateZ(-260px) rotateY(-8deg);filter:blur(10px);
+  transition:opacity .7s ease,transform .9s cubic-bezier(.2,.8,.2,1),filter .7s ease}
+.slide.prev{transform:translateZ(-260px) rotateY(8deg)}
+.slide.active{opacity:1;pointer-events:auto;transform:none;filter:none}
+.r{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);transition-delay:calc(var(--d,0)*110ms + 250ms)}
+.slide.active .r{opacity:1;transform:none}
+
+.tag{font-family:var(--tech);font-size:12px;letter-spacing:.35em;color:var(--c1);margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.tag::before{content:"";width:34px;height:1px;background:var(--c1);box-shadow:0 0 8px var(--c1)}
+h1{font-size:clamp(34px,4.6vw,64px);font-weight:800;line-height:1.25}
+h2{font-size:clamp(28px,3.3vw,46px);font-weight:800;line-height:1.3;margin-bottom:26px}
+h3{font-size:20px;font-weight:600;margin-bottom:8px}
+p,li{font-size:clamp(16px,1.35vw,21px);line-height:1.85;color:#c9d7f2}
+.grad{background:linear-gradient(90deg,var(--c3),var(--c2) 40%,var(--c1));-webkit-background-clip:text;background-clip:text;color:transparent}
+.glow{text-shadow:0 0 24px rgba(34,230,255,.45)}
+.en{font-family:var(--tech);direction:ltr;unicode-bidi:isolate;letter-spacing:.04em}
+.mono{font-family:Consolas,'Courier New',monospace;direction:ltr;unicode-bidi:isolate}
+
+.card{background:linear-gradient(160deg,rgba(130,170,255,.09),rgba(130,170,255,.02));border:1px solid var(--line);border-radius:20px;padding:22px 24px;backdrop-filter:blur(12px);position:relative;overflow:hidden}
+.card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(120deg,transparent 40%,rgba(34,230,255,.10) 50%,transparent 60%);background-size:250% 100%;animation:sheen 7s linear infinite}
+@keyframes sheen{from{background-position:150% 0}to{background-position:-100% 0}}
+.cols{display:grid;gap:22px}
+.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:repeat(3,1fr)}.c4{grid-template-columns:repeat(4,1fr)}
+.ico{font-size:30px;margin-bottom:8px;filter:drop-shadow(0 0 10px rgba(34,230,255,.5))}
+.big{font-family:var(--tech);font-weight:900;font-size:clamp(34px,4vw,58px);color:var(--c1);text-shadow:0 0 26px rgba(34,230,255,.55);direction:ltr;unicode-bidi:isolate}
+.big small{font-size:.45em;color:var(--dim)}
+.lbl{color:var(--dim);font-size:15px}
+.pill{display:inline-block;font-size:13px;padding:3px 12px;border-radius:99px;border:1px solid var(--line);color:var(--dim);margin:3px}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+
+/* title slide */
+.hero{align-items:center;text-align:center}
+.orb{width:min(30vh,260px);height:min(30vh,260px);border-radius:50%;margin:0 auto 34px;position:relative;
+  background:radial-gradient(circle at 35% 30%,#bff7ff,var(--c1) 22%,var(--c2) 58%,#120a3a 80%);box-shadow:0 0 80px rgba(34,230,255,.45),0 0 180px rgba(138,92,255,.35);animation:float 6s ease-in-out infinite}
+.orb::before,.orb::after{content:"";position:absolute;inset:-22px;border-radius:50%;border:1px solid rgba(34,230,255,.45);border-top-color:transparent;border-bottom-color:transparent;animation:spin 9s linear infinite}
+.orb::after{inset:-46px;border-color:rgba(255,61,203,.35);border-left-color:transparent;border-right-color:transparent;animation-duration:14s;animation-direction:reverse}
+.orb .eye{position:absolute;top:44%;width:16%;height:9%;background:#eaffff;border-radius:50%;box-shadow:0 0 18px #fff;animation:look 5s ease-in-out infinite}
+.orb .eye.l{right:28%}.orb .eye.rr{left:28%}
+@keyframes look{0%,100%{transform:translateX(0)}30%{transform:translateX(8px)}60%{transform:translateX(-8px)}}
+@keyframes float{50%{transform:translateY(-14px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.logo{font-family:var(--tech);font-weight:900;font-size:clamp(46px,7vw,104px);letter-spacing:.12em;direction:ltr}
+.author{margin-top:34px;display:inline-flex;flex-direction:column;gap:4px;padding:16px 38px;border-radius:18px;border:1px solid rgba(34,230,255,.4);background:rgba(34,230,255,.06);box-shadow:0 0 30px rgba(34,230,255,.15) inset}
+.author .k{font-size:15px;color:var(--dim)}.author .v{font-size:clamp(22px,2.2vw,32px);font-weight:800}
+
+/* pipeline */
+.flow{display:flex;align-items:stretch;gap:0;flex-wrap:nowrap}
+.step{flex:1;text-align:center;padding:18px 10px;border:1px solid var(--line);border-radius:18px;background:var(--glass);position:relative}
+.step .n{font-family:var(--tech);font-size:11px;color:var(--c1);letter-spacing:.2em}
+.step h3{font-size:17px;margin:8px 0 4px}.step p{font-size:14px;line-height:1.6}
+.step.hl{border-color:var(--c3);box-shadow:0 0 30px rgba(255,61,203,.25);background:rgba(255,61,203,.07)}
+.arrow{width:46px;flex:0 0 46px;position:relative;align-self:center;height:2px;background:linear-gradient(270deg,var(--c1),transparent)}
+.arrow::after{content:"";position:absolute;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--c1);box-shadow:0 0 12px var(--c1);animation:pulse 1.6s linear infinite}
+@keyframes pulse{from{right:0}to{right:100%}}
+
+/* bars */
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar{display:grid;grid-template-columns:170px 1fr 70px;gap:14px;align-items:center;font-size:15px}
+.bar .t{height:14px;border-radius:9px;background:rgba(255,255,255,.06);overflow:hidden}
+.bar .f{height:100%;width:0;border-radius:9px;background:linear-gradient(270deg,var(--c1),var(--c2));box-shadow:0 0 14px rgba(34,230,255,.5);transition:width 1.4s cubic-bezier(.2,.8,.2,1);transition-delay:calc(var(--d,0)*120ms + 400ms)}
+.slide.active .bar .f{width:var(--w)}
+.bar .v{font-family:var(--tech);font-size:14px;color:var(--c1);direction:ltr;text-align:left}
+.f.p{background:linear-gradient(270deg,var(--c3),var(--c2))}.f.g{background:linear-gradient(270deg,#5d6b8a,#3a4560);box-shadow:none}
+
+/* compare */
+.cmp{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.cmp .card h3{font-size:16px;color:var(--dim);font-weight:600;min-height:48px}
+.vbars{display:flex;align-items:flex-end;gap:12px;height:200px;margin-top:10px}
+.vb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.vb .col{width:100%;height:0;border-radius:10px 10px 4px 4px;transition:height 1.4s cubic-bezier(.2,.8,.2,1);transition-delay:calc(var(--d,0)*140ms + 450ms)}
+.slide.active .vb .col{height:calc(var(--h) * 1.6px)}
+.vb .num{font-family:var(--tech);font-size:13px;margin-bottom:6px;direction:ltr}
+.vb .nm{font-size:12px;color:var(--mute);margin-top:6px;text-align:center;line-height:1.3}
+.col.a{background:#3a4560}.col.b{background:linear-gradient(#8a5cff,#4b2fb0)}.col.c{background:linear-gradient(var(--c1),#0b7f99);box-shadow:0 0 22px rgba(34,230,255,.5)}
+
+/* confusion */
+.cm{display:grid;grid-template-columns:110px repeat(8,1fr);gap:3px;direction:ltr;font-family:var(--tech);font-size:12px}
+.cm div{padding:7px 2px;text-align:center;border-radius:5px}
+.cm .h{color:var(--dim);font-family:var(--ar);font-size:12px}
+.cm .cell{color:#fff;opacity:0;transform:scale(.6);transition:opacity .5s,transform .5s;transition-delay:calc(var(--i)*12ms + 300ms)}
+.slide.active .cm .cell{opacity:1;transform:none}
+
+/* formula */
+.fx{font-family:Consolas,'Courier New',monospace;direction:ltr;text-align:left;font-size:clamp(15px,1.25vw,19px);line-height:1.9;color:#bfe9ff;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+.fx .k{color:var(--c3)}.fx .c{color:var(--mute)}
+table.t{width:100%;border-collapse:collapse;font-size:16px}
+table.t td,table.t th{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right}
+table.t th{color:var(--c1);font-weight:600;font-size:14px}
+.ext{display:inline-block;height:10px;border-radius:5px;background:var(--c1);box-shadow:0 0 8px var(--c1);vertical-align:middle;margin-inline-start:6px}
+svg text{font-family:var(--ar)}
+.draw{stroke-dasharray:1400;stroke-dashoffset:1400;transition:stroke-dashoffset 2.4s ease .5s}
+.slide.active .draw{stroke-dashoffset:0}
+.edge{stroke:rgba(34,230,255,.18);stroke-width:1}
+.pulse-edge{stroke:url(#eg);stroke-width:1.4;stroke-dasharray:6 14;animation:dash 1.4s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-40}}
+.node{fill:#0a1430;stroke:var(--c1);stroke-width:1.5;filter:drop-shadow(0 0 5px rgba(34,230,255,.8))}
+.node.o{stroke:var(--c3);filter:drop-shadow(0 0 6px rgba(255,61,203,.8))}
+
+/* menu */
+#menu{position:fixed;inset:0;z-index:40;background:rgba(3,5,13,.86);backdrop-filter:blur(14px);display:none;padding:70px 8vw;overflow:auto}
+#menu.on{display:block}
+#menu ol{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;list-style:none;counter-reset:s}
+#menu li{counter-increment:s;padding:16px 18px;border:1px solid var(--line);border-radius:14px;cursor:pointer;background:var(--glass);font-size:16px}
+#menu li::before{content:counter(s,decimal-leading-zero);font-family:var(--tech);color:var(--c1);margin-inline-end:12px}
+#menu li:hover,#menu li.cur{border-color:var(--c1);box-shadow:0 0 18px rgba(34,230,255,.3)}
+
+@media (max-width:900px){.c3,.c4,.cmp{grid-template-columns:1fr 1fr}.c2{grid-template-columns:1fr}.flow{flex-wrap:wrap;gap:10px}.arrow{display:none}.slide{padding:70px 16px 90px;overflow:auto;justify-content:flex-start}.bar{grid-template-columns:110px 1fr 56px}#menu ol{grid-template-columns:1fr}.hint{display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01s!important}}
+@media print{.hud,.nav,.hint,.progress,#bg,.grid-floor,.scan{display:none}.slide{position:relative;opacity:1;transform:none;filter:none;page-break-after:always;height:100vh}.r{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="grid-floor"></div>
+<div class="scan"></div>
+<div class="progress" id="progress"></div>
+<div class="hud"><span><b>AURA//VISION</b> · DEEP LEARNING</span><span id="clock" style="direction:ltr">2100.00.00 · 00:00:00</span><span>SYS ONLINE<i class="dot"></i></span></div>
+
+<main class="deck" id="deck">
+
+<!-- 1 -->
+<section class="slide hero" data-title="العنوان">
+  <div class="orb r"><i class="eye l"></i><i class="eye rr"></i></div>
+  <div class="logo grad r" style="--d:1">AURA VISION</div>
+  <h1 class="r" style="--d:2;font-size:clamp(22px,2.6vw,36px);font-weight:600;margin-top:12px">التحكم بروبوت ثلاثي الأبعاد بإيماءات اليد وتعابير الوجه<br><span class="grad">باستخدام التعلم العميق</span></h1>
+  <div class="author r" style="--d:4"><span class="k">إعداد الطالب</span><span class="v glow">عبدالولي الجرباني</span></div>
+</section>
+
+<!-- 2 -->
+<section class="slide" data-title="فكرة المشروع">
+  <div class="tag r">01 · IDEA</div>
+  <h2 class="r" style="--d:1">فكرة المشروع: <span class="grad">تحكّم طبيعي بلا لمس</span></h2>
+  <div class="cols c3">
+    <div class="card r" style="--d:2"><div class="ico">🖐️</div><h3>اليد هي جهاز التحكم</h3><p>كاميرا ويب عادية ترى يدك. إيماءة واحدة تجعل الروبوت يمشي أو يركض أو يدور أو يجلس.</p></div>
+    <div class="card r" style="--d:3"><div class="ico">🙂</div><h3>روبوت يقرأ وجهك</h3><p>ينظر إليك، ويبتسم إذا ابتسمت، ويحزن إذا حزنت، ويلتفت مثلك.</p></div>
+    <div class="card r" style="--d:4"><div class="ico">🔒</div><h3>محلي وآمن</h3><p>كل النماذج تعمل على الجهاز: لا إنترنت، ولا خدمات سحابية، ولا تُرسل أي صورة. زر <b class="en">L</b> يوقف كل شيء فوراً.</p></div>
+  </div>
+  <p class="r" style="--d:5;margin-top:26px">قلب المشروع <b class="grad">شبكة عصبية دُرِّبت على بيانات حقيقية</b> لتمييز وضعيات اليد، ومدمجة مع نماذج رؤية حاسوبية جاهزة.</p>
+</section>
+
+<!-- 2b -->
+<section class="slide" data-title="المشكلة والفائدة">
+  <div class="tag r">02 · PROBLEM &amp; VALUE</div>
+  <h2 class="r" style="--d:1">ما المشكلة التي يحلّها المشروع؟ <span class="grad">وما فائدته؟</span></h2>
+  <div class="cols c2" style="align-items:start">
+    <div class="card r" style="--d:2">
+      <h3 class="bad">المشكلة</h3>
+      <ul style="padding-inline-start:20px">
+        <li>التحكم بالروبوتات والأنظمة الذكية يحتاج عادةً <b>أجهزة تحكم أو لوحة مفاتيح أو شاشة لمس</b>.</li>
+        <li>هذا صعب على <b>ذوي الإعاقات الحركية</b> وكبار السن، وغير مناسب حين تكون اليدان مشغولتين أو غير نظيفتين.</li>
+        <li>الحلول الذكية الحالية غالباً <b>سحابية</b>: ترسل صور الكاميرا إلى خوادم خارجية، فتنتهك الخصوصية وتتأخر وتحتاج إنترنت.</li>
+        <li>النماذج الجاهزة <b>محدودة</b>: لا تعرف إيماءات جديدة مثل "ثلاثة أصابع"، وتخطئ في وضعيات ليست أوامر.</li>
+      </ul>
+    </div>
+    <div class="card r" style="--d:3">
+      <h3 class="ok">الحل والفائدة</h3>
+      <ul style="padding-inline-start:20px">
+        <li><b>تحكّم طبيعي بلا لمس</b> بكاميرا ويب عادية رخيصة، بلا أي جهاز إضافي.</li>
+        <li><b>خصوصية كاملة</b>: كل المعالجة على الجهاز، ولا تخرج أي صورة.</li>
+        <li><b>استجابة فورية</b>: نحو 30 ms لكل إطار، دون انتظار شبكة.</li>
+        <li><b>قابل للتوسع</b>: نضيف إيماءة جديدة بتدريب الشبكة على بيانات جديدة، في ثوانٍ.</li>
+        <li><b>آمن</b>: قفل فوري، ورفض الوضعيات غير المقصودة بفئة OTHER.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="cols c4 r" style="--d:4;margin-top:20px">
+    <div class="card"><div class="ico">♿</div><h3>إمكانية الوصول</h3><p style="font-size:15px">بديل لأجهزة التحكم لذوي الإعاقة</p></div>
+    <div class="card"><div class="ico">🏥</div><h3>بيئات معقّمة</h3><p style="font-size:15px">مستشفيات ومختبرات بلا لمس</p></div>
+    <div class="card"><div class="ico">🤖</div><h3>الروبوتات</h3><p style="font-size:15px">توجيه روبوت حقيقي بالإيماءات</p></div>
+    <div class="card"><div class="ico">🎓</div><h3>التعليم والألعاب</h3><p style="font-size:15px">تفاعل طبيعي وجذاب</p></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="slide" data-title="الإيماءات والأفعال">
+  <div class="tag r">03 · INTERACTION</div>
+  <h2 class="r" style="--d:1">من الإيماءة إلى الفعل</h2>
+  <div class="cols c4">
+    <div class="card r" style="--d:2"><div class="ico">✌️</div><h3>سبابة + وسطى</h3><p>يمشي <span class="en ok">0.7 m/s</span></p></div>
+    <div class="card r" style="--d:3"><div class="ico">🤟</div><h3>+ البنصر (ثلاثة أصابع)</h3><p>يركض <span class="en ok">1.6 m/s</span></p></div>
+    <div class="card r" style="--d:4"><div class="ico">👌</div><h3>لمسة إبهام وسبابة</h3><p>قرفصاء <span class="en ok">0.9 s</span></p></div>
+    <div class="card r" style="--d:5"><div class="ico">🌀</div><h3>دوائر بالسبابة</h3><p>دوران حتى <span class="en ok">1080°/s</span></p></div>
+    <div class="card r" style="--d:6"><div class="ico">🖐️</div><h3>كف مفتوح</h3><p>يلوّح بيده</p></div>
+    <div class="card r" style="--d:7"><div class="ico">✊</div><h3>قبضة</h3><p>قفل / فتح الأوامر</p></div>
+    <div class="card r" style="--d:8"><div class="ico">👍</div><h3>إبهام للأعلى / للأسفل</h3><p>يضحك / يحزن</p></div>
+    <div class="card r" style="--d:9"><div class="ico">😊</div><h3>تعابير الوجه</h3><p>يقلّد الابتسامة والحزن والتفات الرأس</p></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="slide" data-title="بنية النظام">
+  <div class="tag r">04 · ARCHITECTURE</div>
+  <h2 class="r" style="--d:1">خط المعالجة لكل إطار من الكاميرا</h2>
+  <div class="flow r" style="--d:2">
+    <div class="step"><div class="n">01</div><h3>الكاميرا</h3><p>إطار صورة<br><span class="en">15–30 FPS</span></p></div><div class="arrow"></div>
+    <div class="step"><div class="n">02 · CNN</div><h3>MediaPipe</h3><p>اكتشاف اليد<br><span class="en">21 landmarks</span></p></div><div class="arrow"></div>
+    <div class="step"><div class="n">03</div><h3>poseVector</h3><p>تطبيع النقاط<br><span class="en">63 features</span></p></div><div class="arrow"></div>
+    <div class="step hl"><div class="n">04 · OUR MLP</div><h3>شبكة AURA</h3><p>تصنيف 8 فئات<br><span class="en">softmax</span></p></div><div class="arrow"></div>
+    <div class="step"><div class="n">05</div><h3>الدمج</h3><p>شبكة + MediaPipe<br>+ قواعد هندسية</p></div><div class="arrow"></div>
+    <div class="step"><div class="n">06</div><h3>الروبوت</h3><p>أمر آمن<br>ومشهد ثلاثي الأبعاد</p></div>
+  </div>
+  <div class="cols c2" style="margin-top:30px">
+    <div class="card r" style="--d:4"><h3>محركان متطابقان</h3><p>المعالجة في <b>المتصفح (JavaScript)</b> أو في <b>Python</b>. الشبكة نفسها تعمل في الاثنين، ونتائجهما متطابقة (الفرق <span class="en">≤ 1.3×10⁻¹⁵</span>).</p></div>
+    <div class="card r" style="--d:5"><h3>نموذج الوجه</h3><p><span class="en">FaceLandmarker</span>: يعطي 478 نقطة للوجه و52 قيمة للتعابير (<span class="en">blendshapes</span>)، تُستخدم للنظر وتقليد الوجه.</p></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="slide" data-title="البيانات">
+  <div class="tag r">05 · DATASET</div>
+  <h2 class="r" style="--d:1">البيانات: <span class="en grad">HaGRIDv2</span></h2>
+  <div class="cols c4" style="margin-bottom:24px">
+    <div class="card r" style="--d:2"><div class="big" data-count="1.08" data-dec="2">0<small>M</small></div><div class="lbl">صورة في المجموعة الأصلية</div></div>
+    <div class="card r" style="--d:3"><div class="big" data-count="22">0</div><div class="lbl">فئة إيماءة نُزِّلت</div></div>
+    <div class="card r" style="--d:4"><div class="big" data-count="7198">0</div><div class="lbl">صورة نُزِّلت (≈ 1.4 GB)</div></div>
+    <div class="card r" style="--d:5"><div class="big" data-count="5302">0</div><div class="lbl">يد واحدة واضحة → للتدريب</div></div>
+  </div>
+  <div class="cols c2">
+    <div class="card r" style="--d:6">
+      <h3>توزيع الفئات بعد الربط</h3>
+      <div class="bars" id="classBars"></div>
+    </div>
+    <div class="card r" style="--d:7">
+      <h3>المصدر والمعالجة</h3>
+      <p><span class="en">HaGRID: HAnd Gesture Recognition Image Dataset</span> (Kapitanov et al., WACV 2024).</p>
+      <ul style="padding-inline-start:20px;margin-top:6px">
+        <li>شغّلنا MediaPipe على كل صورة لاستخراج النقاط الـ 21.</li>
+        <li>استبعدنا الصور التي فيها يدان أو بلا يد، لأن تسمية الصورة لا تحدد أي يد هي المقصودة.</li>
+        <li>13 فئة من HaGRID تحوّلت إلى <b>OTHER</b> كأمثلة سلبية.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="slide" data-title="اختيار فئة الركض">
+  <div class="tag r">06 · DATA DECISION</div>
+  <h2 class="r" style="--d:1">اخترنا فئة الركض <span class="grad">بالقياس لا بالاسم</span></h2>
+  <p class="r" style="--d:2">في HaGRID ثلاث فئات تحمل اسم "three". قسنا امتداد كل إصبع في صور كل فئة:</p>
+  <div class="card r" style="--d:3;margin-top:16px">
+    <table class="t" id="threeTable"></table>
+  </div>
+  <p class="r" style="--d:4;margin-top:18px">النتيجة: الفئة <b class="en ok">three</b> وحدها ترفع <b>السبابة والوسطى والبنصر</b> مع خنصر مطوي، وهي بالضبط إيماءة الركض المطلوبة.</p>
+</section>
+
+<!-- 9 -->
+<section class="slide" data-title="زيادة البيانات">
+  <div class="tag r">07 · AUGMENTATION</div>
+  <h2 class="r" style="--d:1">زيادة البيانات: <span class="grad">×5 عيّنات تدريب</span></h2>
+  <div class="cols c3">
+    <div class="card r" style="--d:2"><div class="ico">🪞</div><h3>قلب أفقي</h3><p>اليد اليمنى تصبح يسرى (احتمال 50%)، فيتعلم النموذج اليدين معاً.</p></div>
+    <div class="card r" style="--d:3"><div class="ico">🔄</div><h3>دوران ±25°</h3><p>اليد لا تكون مستقيمة دائماً أمام الكاميرا.</p></div>
+    <div class="card r" style="--d:4"><div class="ico">〰️</div><h3>ضجيج <span class="en">σ = 0.03</span></h3><p>يحاكي اهتزاز النقاط الحقيقي من الكاميرا.</p></div>
+  </div>
+  <div class="card r" style="--d:5;margin-top:22px;display:flex;gap:40px;align-items:center;justify-content:center">
+    <div style="text-align:center"><div class="big" data-count="4245">0</div><div class="lbl">عيّنة تدريب أصلية</div></div>
+    <div class="big" style="color:var(--c3)">→</div>
+    <div style="text-align:center"><div class="big" data-count="21225">0</div><div class="lbl">بعد الزيادة (الأصل + 4 نسخ)</div></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide" data-title="معمارية الشبكة">
+  <div class="tag r">08 · NETWORK</div>
+  <h2 class="r" style="--d:1">معمارية الشبكة: <span class="en grad">MLP 63 → 128 → 64 → 8</span></h2>
+  <div class="cols" style="grid-template-columns:1.5fr 1fr;align-items:center">
+    <div class="r" style="--d:2"><svg id="net" viewBox="0 0 760 400" style="width:100%"></svg></div>
+    <div>
+      <div class="card r" style="--d:3"><div class="big" data-count="16968">0</div><div class="lbl">معامل (وزن + انحياز) فقط</div></div>
+      <div class="fx r" style="--d:4;margin-top:16px">
+h<sub>1</sub> = ReLU(W<sub>1</sub>x + b<sub>1</sub>) <span class="c"># 128</span><br>
+h<sub>2</sub> = ReLU(W<sub>2</sub>h<sub>1</sub> + b<sub>2</sub>) <span class="c"># 64</span><br>
+ŷ = softmax(W<sub>3</sub>h<sub>2</sub> + b<sub>3</sub>) <span class="c"># 8</span>
+      </div>
+      <p class="r" style="--d:5;margin-top:14px">مكتوبة <b>من الصفر بـ NumPy</b>: الانتشار الأمامي والعكسي ومُحسِّن Adam، بتهيئة He.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="slide" data-title="نتائج الشبكة">
+  <div class="tag r">09 · RESULTS</div>
+  <h2 class="r" style="--d:1">نتائج الشبكة على بيانات التحقق</h2>
+  <div class="cols" style="grid-template-columns:1fr 1.25fr;align-items:center">
+    <div>
+      <div class="card r" style="--d:2;text-align:center"><div class="lbl">الدقة الكلية</div><div class="big" style="font-size:clamp(54px,6vw,92px)" data-count="95.9" data-dec="1" data-suf="%">0</div><div class="lbl">على 1,057 يداً لم تُرَ في التدريب</div></div>
+      <div class="card r" style="--d:3;margin-top:16px"><div class="bars" id="recallBars"></div></div>
+    </div>
+    <div class="card r" style="--d:4">
+      <h3>مصفوفة الالتباس <span class="lbl">(الصف = الحقيقة، العمود = التوقع)</span></h3>
+      <div class="cm" id="cm"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="slide" data-title="أثر الشبكة على النظام">
+  <div class="tag r">10 · IMPACT</div>
+  <h2 class="r" style="--d:1">أثر الشبكة على <span class="grad">قرار النظام كله</span></h2>
+  <div class="cmp" id="cmp"></div>
+  <p class="r" style="--d:6;margin-top:18px"><span class="pill">▮ قواعد هندسية فقط</span><span class="pill" style="color:#b9a4ff">▮ MediaPipe + قواعد (قبل)</span><span class="pill" style="color:var(--c1)">▮ مع شبكتنا (الآن)</span> · الدقة الكلية ارتفعت من <b class="en">78.9%</b> إلى <b class="en ok">90.7%</b></p>
+</section>
+
+<!-- 17 -->
+<section class="slide" data-title="الحدود والمستقبل">
+  <div class="tag r">11 · LIMITS &amp; FUTURE</div>
+  <h2 class="r" style="--d:1">حدود العمل والخطوات القادمة</h2>
+  <div class="cols c2">
+    <div class="card r" style="--d:2"><h3 class="warn">الحدود</h3><ul style="padding-inline-start:20px">
+      <li>نسخة البيانات بلا هوية أشخاص، فقد يظهر الشخص نفسه في التدريب والتحقق، والأرقام متفائلة قليلاً.</li>
+      <li>الركض والإبهامان: نحو 150 صورة فقط لكل فئة.</li>
+      <li>إشارة OK تُقرأ قرصاً، و"اصمت" تُقرأ إشارةً بالسبابة.</li>
+    </ul></div>
+    <div class="card r" style="--d:3"><h3 class="ok">القادم</h3><ul style="padding-inline-start:20px">
+      <li>تقسيم البيانات حسب الشخص (subject-independent).</li>
+      <li>تنزيل بيانات أكثر للفئات الصغيرة.</li>
+      <li>تقييم مباشر بمشاركين يتبعون التعليمات بدقة.</li>
+      <li>تمييز الإيماءات الزمنية (التسلسل) بشبكة <span class="en">LSTM / Transformer</span>.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- 18 -->
+<section class="slide hero" data-title="الخاتمة">
+  <div class="orb r" style="width:min(22vh,190px);height:min(22vh,190px)"><i class="eye l"></i><i class="eye rr"></i></div>
+  <h1 class="r" style="--d:1"><span class="grad">شكراً لكم</span></h1>
+  <p class="r" style="--d:2;font-size:clamp(18px,1.6vw,24px);margin-top:10px">بيانات حقيقية ← شبكة عصبية ← دقة <b class="en ok">90.7%</b> لقرار النظام ← روبوت يفهم يدك ووجهك</p>
+  <div class="author r" style="--d:3"><span class="k">إعداد الطالب</span><span class="v glow">عبدالولي الجرباني</span></div>
+  <p class="r lbl" style="--d:4;margin-top:22px">الأسئلة والمناقشة</p>
+</section>
+
+</main>
+
+<nav class="nav">
+  <button id="prevBtn" title="السابق">→</button>
+  <span class="count" id="count">01 / 13</span>
+  <button id="nextBtn" title="التالي">←</button>
+  <button id="menuBtn" title="فهرس الشرائح (O)">☰</button>
+  <button id="fsBtn" title="ملء الشاشة (F)">⛶</button>
+</nav>
+<div class="hint"><kbd>←</kbd> التالي <kbd>→</kbd> السابق <kbd>F</kbd> ملء الشاشة <kbd>O</kbd> الفهرس</div>
+<div id="menu"><ol id="menuList"></ol></div>
+
+<script>
+(() => {
+  // ---------- data (training/report.json) ----------
+  const CLASSES = ['OPEN_PALM','FIST','POINT','TWO_FINGERS','THREE_FINGERS','THUMB_UP','THUMB_DOWN','OTHER'];
+  const AR = {OPEN_PALM:'كف مفتوح',FIST:'قبضة',POINT:'سبابة',TWO_FINGERS:'إصبعان (مشي)',THREE_FINGERS:'ثلاثة (ركض)',THUMB_UP:'إبهام للأعلى',THUMB_DOWN:'إبهام للأسفل',OTHER:'أخرى'};
+  const SHORT = {OPEN_PALM:'كف',FIST:'قبضة',POINT:'سبابة',TWO_FINGERS:'مشي',THREE_FINGERS:'ركض',THUMB_UP:'👍',THUMB_DOWN:'👎',OTHER:'أخرى'};
+  const COUNTS = {OPEN_PALM:903,FIST:441,POINT:440,TWO_FINGERS:864,THREE_FINGERS:147,THUMB_UP:153,THUMB_DOWN:155,OTHER:2199};
+  const PR = {OPEN_PALM:[.9519,.9889],FIST:[.9775,.9886],POINT:[.9318,.9318],TWO_FINGERS:[.9766,.9709],THREE_FINGERS:[.9062,1],THUMB_UP:[.75,1],THUMB_DOWN:[.963,.8387],OTHER:[.9811,.9453]};
+  const CM = [[178,0,1,0,0,0,0,1],[1,87,0,0,0,0,0,0],[0,1,82,1,0,0,0,4],[1,0,1,167,1,2,0,0],[0,0,0,0,29,0,0,0],[0,0,0,0,0,30,0,0],[0,0,0,0,1,1,26,3],[7,1,4,3,1,7,1,415]];
+  const CURVE = {ep:[0,10,20,30,40,50,60,70,79],acc:[83.35,96.69,96.59,96.97,96.88,96.78,96.88,96.78,96.78],loss:[.3157,.2325,.2685,.2619,.2870,.2867,.3044,.3042,.3051]};
+  const IMPACT = [
+    ['الدقة الكلية', [75.7,78.9,90.7], true],
+    ['التعرف على الركض (3 أصابع)', [82.8,82.8,100], true],
+    ['التعرف على الكف المفتوح', [99.4,49.4,98.9], true],
+    ['أمر خاطئ على وضعية ليست أمراً (أقل = أفضل)', [47.4,20.3,14.4], false],
+  ];
+  const THREE = [['three',.91,1,1,.99,.03,'THREE_FINGERS ✓'],['three2',1,1,.99,0,.01,'OTHER'],['three3',.77,.99,.97,.03,.97,'OTHER']];
+
+  // ---------- build charts ----------
+  const $ = (s) => document.querySelector(s);
+  const max = Math.max(...Object.values(COUNTS));
+  $('#classBars').innerHTML = CLASSES.map((c,i) => `<div class="bar"><span>${AR[c]}</span><div class="t"><div class="f ${c==='OTHER'?'g':c==='THREE_FINGERS'?'p':''}" style="--w:${COUNTS[c]/max*100}%;--d:${i}"></div></div><span class="v">${COUNTS[c].toLocaleString('en')}</span></div>`).join('');
+  $('#recallBars').innerHTML = '<div class="lbl" style="margin-bottom:4px">الاستدعاء (Recall) لكل فئة</div>' + CLASSES.map((c,i) => `<div class="bar" style="grid-template-columns:120px 1fr 58px"><span>${AR[c]}</span><div class="t"><div class="f ${PR[c][1]>=.95?'':'p'}" style="--w:${PR[c][1]*100}%;--d:${i}"></div></div><span class="v">${(PR[c][1]*100).toFixed(1)}%</span></div>`).join('');
+
+  const cm = $('#cm'); let html = '<div></div>' + CLASSES.map(c => `<div class="h">${SHORT[c]}</div>`).join(''); let k = 0;
+  CM.forEach((row,i) => { const s = row.reduce((a,b)=>a+b,0); html += `<div class="h" style="text-align:right">${AR[CLASSES[i]]}</div>`;
+    row.forEach((v,j) => { const p = v/s; const col = i===j ? `rgba(34,230,255,${.15+p*.85})` : v ? `rgba(255,61,203,${.2+Math.min(1,p*6)*.6})` : 'rgba(255,255,255,.03)';
+      html += `<div class="cell" style="background:${col};--i:${k++};${!v?'color:#334':''}">${v}</div>`; }); });
+  cm.innerHTML = html;
+
+  $('#threeTable').innerHTML = '<tr><th>فئة HaGRID</th><th>الإبهام</th><th>السبابة</th><th>الوسطى</th><th>البنصر</th><th>الخنصر</th><th>الاستخدام</th></tr>' +
+    THREE.map(r => `<tr><td class="en">${r[0]}</td>${r.slice(1,6).map(v => `<td class="en">${v.toFixed(2)}<span class="ext" style="width:${v*46}px;${v<.5?'background:var(--mute);box-shadow:none':''}"></span></td>`).join('')}<td class="en ${r[0]==='three'?'ok':''}">${r[6]}</td></tr>`).join('');
+
+  $('#cmp').innerHTML = IMPACT.map(([t,v,up],i) => `<div class="card r" style="--d:${i+2}"><h3>${t}</h3><div class="vbars">${v.map((x,j) => `<div class="vb" style="--d:${i*3+j}"><div class="num" style="color:${j===2?(up?'var(--ok)':'var(--ok)'):'var(--dim)'}">${x}%</div><div class="col ${'abc'[j]}" style="--h:${x}"></div><div class="nm">${['قواعد','قبل','الآن'][j]}</div></div>`).join('')}</div></div>`).join('');
+
+  // hand landmarks
+  const P = [[150,330],[110,300],[80,265],[62,235],[48,205],[115,205],[105,150],[100,115],[96,82],[150,198],[150,138],[150,100],[150,62],[185,205],[192,150],[196,115],[199,85],[215,222],[230,180],[238,152],[245,125]];
+  const E = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[0,17],[17,18],[18,19],[19,20]];
+  let h = `<defs><radialGradient id="hg"><stop offset="0" stop-color="#22e6ff" stop-opacity=".35"/><stop offset="1" stop-color="#22e6ff" stop-opacity="0"/></radialGradient></defs><circle cx="150" cy="200" r="150" fill="url(#hg)"/>`;
+  h += E.map(([a,b]) => `<line class="draw" x1="${P[a][0]}" y1="${P[a][1]}" x2="${P[b][0]}" y2="${P[b][1]}" stroke="#22e6ff" stroke-width="3" stroke-linecap="round" style="stroke-dasharray:200;stroke-dashoffset:200"/>`).join('');
+  [5,9,17].forEach(i => h += `<line x1="150" y1="330" x2="${P[i][0]}" y2="${P[i][1]}" stroke="#ff3dcb" stroke-width="1.5" stroke-dasharray="4 5" opacity=".8"/>`);
+  h += P.map((p,i) => `<circle cx="${p[0]}" cy="${p[1]}" r="${i===0?9:6}" fill="${i===0?'#ff3dcb':'#0a1430'}" stroke="${i===0?'#fff':'#22e6ff'}" stroke-width="2"/><text x="${p[0]+(i>16||i===0?12:-12)}" y="${p[1]+4}" font-size="10" fill="#8ea3c7" text-anchor="middle" font-family="Orbitron">${i}</text>`).join('');
+  h += `<text x="150" y="356" font-size="13" fill="#ff3dcb" text-anchor="middle">المعصم = الأصل (0,0)</text>`;
+  if ($('#hand')) $('#hand').innerHTML = h;
+
+  // network
+  const layers = [[12,'63 مدخل'],[14,'128 · ReLU'],[10,'64 · ReLU'],[8,'8 · softmax']];
+  const X = [60,250,440,600]; let net = `<defs><linearGradient id="eg"><stop offset="0" stop-color="#22e6ff"/><stop offset="1" stop-color="#ff3dcb"/></linearGradient></defs>`;
+  const pos = layers.map(([n],li) => Array.from({length:n},(_,i) => [X[li], 40 + (i+.5)*(320/n)]));
+  for (let li=0; li<3; li++) pos[li].forEach((a,i) => pos[li+1].forEach((b,j) => { const pul = (i*7+j*3+li)%11===0; net += `<line class="${pul?'pulse-edge':'edge'}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" style="animation-delay:${(i+j)%7*-.2}s"/>`; }));
+  pos.forEach((L,li) => L.forEach(([x,y],i) => { net += `<circle class="node ${li===3?'o':''}" cx="${x}" cy="${y}" r="${li===3?9:7}"/>`; if (li===3) net += `<text x="${x+16}" y="${y+4}" font-size="12" fill="#c9d7f2" direction="ltr" text-anchor="start" font-family="Orbitron">${CLASSES[i].replace('_FINGERS','').replace('_',' ')}</text>`; }));
+  layers.forEach(([,t],li) => net += `<text x="${X[li]}" y="392" font-size="14" fill="#22e6ff" text-anchor="middle">${t}</text>`);
+  net += `<text x="60" y="24" font-size="12" fill="#56688c" text-anchor="middle">poseVector</text>`;
+  $('#net').innerHTML = net;
+
+  // training curve
+  const W=520,H=300,px=(e)=>50+e/79*440, pyA=(a)=>260-(a-80)/20*220, pyL=(l)=>260-(l-.2)/.15*220;
+  let cv = '';
+  for (let a=80;a<=100;a+=5) cv += `<line x1="50" x2="490" y1="${pyA(a)}" y2="${pyA(a)}" stroke="rgba(120,190,255,.12)"/><text x="40" y="${pyA(a)+4}" font-size="11" fill="#56688c" text-anchor="end" font-family="Orbitron">${a}%</text>`;
+  for (let l=.20;l<=.351;l+=.05) cv += `<text x="498" y="${pyL(l)+4}" font-size="11" fill="#ff3dcb" text-anchor="start" font-family="Orbitron">${l.toFixed(2)}</text>`;
+  CURVE.ep.forEach(e => cv += `<text x="${px(e)}" y="282" font-size="11" fill="#56688c" text-anchor="middle" font-family="Orbitron">${e}</text>`);
+  cv += `<polyline class="draw" fill="none" stroke="#22e6ff" stroke-width="3" points="${CURVE.ep.map((e,i)=>px(e)+','+pyA(CURVE.acc[i])).join(' ')}" style="filter:drop-shadow(0 0 6px #22e6ff)"/>`;
+  cv += `<polyline class="draw" fill="none" stroke="#ff3dcb" stroke-width="2.5" stroke-linejoin="round" points="${CURVE.ep.map((e,i)=>px(e)+','+pyL(CURVE.loss[i])).join(' ')}"/>`;
+  cv += `<line x1="${px(4)}" x2="${px(4)}" y1="30" y2="260" stroke="#3dffa8" stroke-dasharray="4 4"/><text x="${px(4)+70}" y="24" font-size="12" fill="#3dffa8" text-anchor="middle">أفضل حقبة (4) · 95.9%</text>`;
+  cv += `<text x="270" y="298" font-size="11" fill="#8ea3c7" text-anchor="middle">الحقبة (epoch)</text>`;
+  if ($('#curve')) $('#curve').innerHTML = cv;
+
+  // ---------- deck navigation ----------
+  const slides = [...document.querySelectorAll('.slide')];
+  const N = slides.length; let cur = -1;
+  const pad = (n) => String(n).padStart(2,'0');
+  const menu = $('#menuList');
+  menu.innerHTML = slides.map((s,i) => `<li data-i="${i}">${s.dataset.title}</li>`).join('');
+  menu.addEventListener('click', (e) => { const li = e.target.closest('li'); if (li) { go(+li.dataset.i); $('#menu').classList.remove('on'); } });
+
+  function count(el) {
+    const target = parseFloat(el.dataset.count), dec = +(el.dataset.dec||0), suf = el.dataset.suf||'', small = el.querySelector('small');
+    const tail = small ? small.outerHTML : ''; const t0 = performance.now(), dur = 1500;
+    const step = (t) => { const k = Math.min(1,(t-t0)/dur), e = 1-Math.pow(1-k,4), v = target*e;
+      el.innerHTML = (dec ? v.toFixed(dec) : Math.round(v).toLocaleString('en')) + suf + tail; if (k<1) requestAnimationFrame(step); };
+    setTimeout(() => requestAnimationFrame(step), 450);
+  }
+  function go(i) {
+    i = Math.max(0, Math.min(N-1, i)); if (i === cur) return;
+    slides.forEach((s,j) => { s.classList.toggle('active', j===i); s.classList.toggle('prev', j<i); });
+    cur = i; $('#count').textContent = `${pad(i+1)} / ${pad(N)}`;
+    $('#progress').style.width = ((i+1)/N*100) + '%';
+    [...menu.children].forEach((li,j) => li.classList.toggle('cur', j===i));
+    slides[i].querySelectorAll('[data-count]').forEach(count);
+    try { history.replaceState(null,'','#'+(i+1)); } catch (e) {}
+  }
+  const next = () => go(cur+1), prev = () => go(cur-1);
+  $('#nextBtn').onclick = next; $('#prevBtn').onclick = prev;
+  $('#menuBtn').onclick = () => $('#menu').classList.toggle('on');
+  const fs = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); };
+  $('#fsBtn').onclick = fs;
+  addEventListener('keydown', (e) => {
+    const k = e.key;
+    if (['ArrowLeft','ArrowDown',' ','PageDown','Enter'].includes(k)) { e.preventDefault(); next(); }
+    else if (['ArrowRight','ArrowUp','PageUp','Backspace'].includes(k)) { e.preventDefault(); prev(); }
+    else if (k==='Home') go(0); else if (k==='End') go(N-1);
+    else if (k==='f'||k==='F') fs();
+    else if (k==='o'||k==='O'||k==='Escape') $('#menu').classList.toggle('on', k!=='Escape' && !$('#menu').classList.contains('on'));
+  });
+  let tx = null;
+  addEventListener('touchstart', (e) => tx = e.touches[0].clientX, {passive:true});
+  addEventListener('touchend', (e) => { if (tx===null) return; const dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 50) (dx > 0 ? next : prev)(); tx = null; });
+  go(Math.max(0, (parseInt(location.hash.slice(1)) || 1) - 1));
+
+  // ---------- clock (year 2100) ----------
+  setInterval(() => { const d = new Date(); $('#clock').textContent = `2100.${pad(d.getMonth()+1)}.${pad(d.getDate())} · ${d.toLocaleTimeString('en-GB')}`; }, 1000);
+
+  // ---------- neural particle background ----------
+  const c = $('#bg'), g = c.getContext('2d'); let pts = [], w, hh;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function size() { w = c.width = innerWidth * devicePixelRatio; hh = c.height = innerHeight * devicePixelRatio; c.style.width = innerWidth+'px'; c.style.height = innerHeight+'px';
+    pts = Array.from({length: Math.min(90, Math.round(innerWidth/18))}, () => ({x:Math.random()*w, y:Math.random()*hh, vx:(Math.random()-.5)*.35, vy:(Math.random()-.5)*.35, r:Math.random()*1.8+.6})); }
+  size(); addEventListener('resize', size);
+  const D = 150 * devicePixelRatio;
+  (function loop() {
+    g.clearRect(0,0,w,hh);
+    for (const p of pts) { p.x += p.vx; p.y += p.vy; if (p.x<0||p.x>w) p.vx*=-1; if (p.y<0||p.y>hh) p.vy*=-1; }
+    for (let i=0;i<pts.length;i++) for (let j=i+1;j<pts.length;j++) { const a=pts[i], b=pts[j], d=Math.hypot(a.x-b.x,a.y-b.y);
+      if (d<D) { g.strokeStyle = `rgba(34,230,255,${(1-d/D)*.22})`; g.lineWidth = devicePixelRatio*.7; g.beginPath(); g.moveTo(a.x,a.y); g.lineTo(b.x,b.y); g.stroke(); } }
+    for (const p of pts) { g.fillStyle = 'rgba(160,220,255,.8)'; g.beginPath(); g.arc(p.x,p.y,p.r*devicePixelRatio,0,7); g.fill(); }
+    if (!reduce) requestAnimationFrame(loop);
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AURA VISION</title>
+    <meta name="description" content="Real-time hand tracking and gesture interaction with a 3D robot. Processing runs locally in the browser." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='11' fill='none' stroke='%23ff8a2a' stroke-width='3'/><circle cx='16' cy='16' r='4' fill='%2338e1ff'/></svg>" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <main id="stage" class="stage">
+      <video id="camera" class="camera" playsinline muted></video>
+      <!-- Python engine mode: preview frames streamed by the engine (it owns the camera) -->
+      <canvas id="preview" class="camera" hidden></canvas>
+      <div class="vignette" aria-hidden="true"></div>
+      <!-- 3D robot below, hand overlay on top so landmarks are never hidden -->
+      <canvas id="scene" class="layer" aria-hidden="true"></canvas>
+      <canvas id="fx" class="layer" aria-hidden="true"></canvas>
+
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span class="brand-name">AURA<span class="brand-thin">VISION</span></span>
+        </div>
+        <div class="pills" role="status" aria-live="polite">
+          <span class="pill" data-pill="camera"><i></i><b>CAM</b><span data-field="pill.camera">OFF</span></span>
+          <span class="pill" data-pill="tracker"><i></i><b>MODEL</b><span data-field="pill.tracker">—</span></span>
+          <span class="pill" data-pill="state"><i></i><b>ROBOT</b><span data-field="pill.state">IDLE</span></span>
+        </div>
+        <div class="actions">
+          <button id="btn-toggle" class="btn" type="button">Start camera</button>
+          <button id="btn-agent" class="btn btn-ghost" type="button" aria-controls="agent" aria-expanded="false" title="AI agent panel">Agent</button>
+          <button id="btn-hud" class="btn btn-ghost" type="button" title="Toggle HUD (H)">HUD</button>
+        </div>
+      </header>
+
+      <aside id="hud" class="hud" aria-label="System status">
+        <section class="hud-block hud-gesture">
+          <div class="hud-label">Gesture</div>
+          <div class="gesture-name" data-field="gesture.stable">NONE</div>
+          <div class="meter" aria-hidden="true"><div class="meter-fill" data-field="gesture.meter"></div></div>
+          <div class="hud-sub">
+            <span>raw <b data-field="gesture.raw">—</b></span>
+            <span>score <b data-field="gesture.confidence">—</b></span>
+          </div>
+          <div class="hud-note" data-field="gesture.reason"></div>
+        </section>
+
+        <section class="hud-block">
+          <div class="hud-label">Interaction</div>
+          <dl class="kv">
+            <dt>Tracking</dt><dd data-field="tracking.status">—</dd>
+            <dt>Robot state</dt><dd data-field="robot.state">IDLE</dd>
+            <dt>Agent</dt><dd data-field="robot.agent">—</dd>
+            <dt>Active</dt><dd data-field="robot.active">—</dd>
+            <dt>Movement</dt><dd data-field="robot.movement">IDLE</dd>
+            <dt>Face</dt><dd data-field="robot.face">—</dd>
+            <dt>Looking at</dt><dd data-field="robot.attention">—</dd>
+            <dt>Position</dt><dd data-field="robot.position">—</dd>
+            <dt>Hands</dt><dd data-field="tracking.hands">0</dd>
+            <dt>Hand · conf.</dt><dd data-field="tracking.primary">—</dd>
+          </dl>
+        </section>
+
+        <section class="hud-block">
+          <div class="hud-label">Performance <span class="hud-hint">measured</span></div>
+          <dl class="kv kv-num">
+            <dt>Camera FPS</dt><dd data-field="perf.camera">—</dd>
+            <dt>Processed FPS</dt><dd data-field="perf.processed">—</dd>
+            <dt>Render FPS</dt><dd data-field="perf.render">—</dd>
+            <dt>Inference</dt><dd data-field="perf.inference">—</dd>
+            <dt>Frame → result</dt><dd data-field="perf.pipeline">—</dd>
+            <dt>Frame → overlay</dt><dd data-field="perf.overlay">—</dd>
+            <dt>Dropped frames</dt><dd data-field="perf.dropped">—</dd>
+            <dt>Preview enc / dec</dt><dd data-field="perf.preview">—</dd>
+          </dl>
+        </section>
+
+        <section class="hud-block">
+          <div class="hud-label">System</div>
+          <dl class="kv">
+            <dt>CV engine</dt><dd data-field="sys.engine">—</dd>
+            <dt>AI agent</dt><dd data-field="sys.agent">—</dd>
+            <dt>Camera</dt><dd data-field="sys.camera">stopped</dd>
+            <dt>Hand model</dt><dd data-field="sys.tracker">not loaded</dd>
+            <dt>Robot asset</dt><dd data-field="sys.asset">loading…</dd>
+            <dt>Config</dt><dd data-field="sys.config">—</dd>
+            <dt>Session</dt><dd data-field="sys.session">—</dd>
+          </dl>
+        </section>
+
+        <section class="hud-block hud-events">
+          <div class="hud-label">Events <button id="btn-export" class="link" type="button" title="Download session metrics and events as JSON (E)">export</button></div>
+          <ol class="events" data-field="events"></ol>
+        </section>
+      </aside>
+
+      <aside class="legend" aria-label="Gesture reference">
+        <div class="hud-label">Gestures</div>
+        <ul data-field="legend"></ul>
+        <div class="legend-help">
+          <p><b>Puppet:</b> your fingertips hold the robot on strings; move or turn your hand and it follows at once. Take the hand away and the strings fall.</p>
+          <p><b>Walk / Run:</b> raise index + middle (V) to walk; add the ring finger (three fingers) to run. Move the hand left / right to steer.</p>
+          <p><b>Squat:</b> touch the thumb and index tips together and let go quickly: one squat per tap.</p>
+          <p><b>Heavy lifting:</b> pinch and <i>hold</i>, then raise the hand to lift the robot, move sideways to turn it.</p>
+          <p><b>Spin:</b> index finger straight up, circle it like a tornado; the robot spins as fast as you circle.</p>
+          <p><b>Face:</b> the robot looks at you; it smiles when you smile, is sad when you are, and turns / raises its head like you (mirror).</p>
+          <p><b>Laugh / Sad:</b> thumb up / thumb down, hold still.</p>
+          <p><b>Stop:</b> stop the motion, hand out of view, <kbd>L</kbd> (lock), <kbd>Esc</kbd> (camera off). <kbd>R</kbd> returns home.</p>
+        </div>
+        <div class="legend-keys">Keys: <kbd>L</kbd> lock · <kbd>W</kbd> wave · <kbd>R</kbd> reset · <kbd>H</kbd> HUD · <kbd>Esc</kbd> stop</div>
+      </aside>
+
+      <!-- AI agent: natural-language requests, executed only through the app's task boundary -->
+      <aside id="agent" class="agent hidden" aria-label="AI agent">
+        <header class="agent-head">
+          <span class="hud-label">Agent</span>
+          <span class="agent-model" data-agent="status"></span>
+          <button id="agent-clear" class="link" type="button" title="Clear the conversation">clear</button>
+          <button id="agent-close" class="link" type="button" title="Close the agent panel">close</button>
+        </header>
+        <ol class="agent-log" data-agent="log" aria-live="polite" aria-label="Conversation"></ol>
+        <div class="agent-confirm" data-agent="confirm" role="alertdialog" aria-label="Confirm action" hidden>
+          <p data-agent="confirm-text"></p>
+          <div class="agent-confirm-row">
+            <button id="agent-confirm-yes" class="btn btn-primary" type="button">Confirm</button>
+            <button id="agent-confirm-no" class="btn" type="button">Cancel</button>
+            <span class="agent-timer" data-agent="confirm-timer"></span>
+          </div>
+        </div>
+        <div class="agent-phase" data-agent="phase" role="status" aria-live="polite"></div>
+        <form id="agent-form" class="agent-form">
+          <label class="sr-only" for="agent-input">Message to the agent</label>
+          <textarea id="agent-input" rows="2" maxlength="2000" placeholder="Ask AURA, e.g. wave, or: what is the robot doing?"></textarea>
+          <div class="agent-buttons">
+            <button id="agent-send" class="btn btn-primary" type="submit">Send</button>
+            <button id="agent-stop" class="btn" type="button" hidden title="Cancel the pending request (Esc)">Stop</button>
+          </div>
+        </form>
+      </aside>
+
+      <div id="overlay" class="overlay">
+        <div class="overlay-card">
+          <div class="overlay-title">AURA<span class="brand-thin">VISION</span></div>
+          <p class="overlay-text" data-field="overlay.text">
+            Hand tracking runs entirely in this browser. Camera frames are never uploaded, recorded or stored.
+          </p>
+          <p class="overlay-error" data-field="overlay.error" hidden></p>
+          <label class="overlay-select" hidden>
+            <span>Camera</span>
+            <select id="camera-select"></select>
+          </label>
+          <button id="btn-start" class="btn btn-primary" type="button">Start camera</button>
+          <p class="overlay-engine"><span data-field="overlay.engine"></span> <button id="btn-engine" class="link" type="button"></button></p>
+        </div>
+      </div>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

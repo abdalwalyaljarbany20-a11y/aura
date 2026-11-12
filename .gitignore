@@ -1,0 +1,24 @@
+node_modules/
+dist/
+integration-output/
+# Downloaded / copied by `npm run setup` (reproducible, large)
+public/models/*.task
+public/models/*.tflite
+public/mediapipe/wasm/
+# Local user configuration (copy from public/aura.config.example.json)
+public/aura.config.json
+# Python engine
+.venv/
+__pycache__/
+.pytest_cache/
+# Secrets (agent credentials) - never commit
+.env
+.env.local
+.env.*.local
+!.env.example
+# Training data (downloaded by training/fetch_dataset.py; licence: see training/README.md)
+data/
+
+# Old / broken local Python environments (never commit)
+venv/
+.venv-*/

@@ -1,0 +1,37 @@
+{
+  "camera": {
+    "width": 1280,
+    "height": 720,
+    "frameRate": 30,
+    "mirror": true
+  },
+  "tracking": {
+    "delegate": "GPU",
+    "numHands": 1
+  },
+  "gestures": {
+    "minScore": 0.6,
+    "definitions": {
+      "OPEN_PALM": { "enabled": true, "holdMs": 500 },
+      "FIST": { "enabled": true, "holdMs": 600 }
+    },
+    "swipe": {
+      "minDistance": 2.2,
+      "minSpeed": 4.0
+    }
+  },
+  "interaction": {
+    "bindings": {
+      "OPEN_PALM": "WAVE",
+      "FIST": "TOGGLE_LOCK",
+      "PINCH": "GRAB_ROTATE",
+      "POINT": "AIM",
+      "SWIPE_LEFT": "SPIN_LEFT",
+      "SWIPE_RIGHT": "SPIN_RIGHT"
+    },
+    "cooldownMs": 900
+  },
+  "scene": {
+    "robotModelUrl": null
+  }
+}

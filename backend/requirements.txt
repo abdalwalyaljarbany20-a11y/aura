@@ -1,0 +1,7 @@
+# Python CV engine runtime dependencies (verified on Windows 11, Python 3.14.7, 2026-10-19).
+# mediapipe 1.1.1 ships only the Tasks API (no mediapipe.solutions) and itself requires
+# opencv-contrib-python; do NOT also install opencv-python (both provide cv2).
+mediapipe==1.1.1
+opencv-contrib-python==5.0.0.93
+numpy==2.5.4
+websockets==17.3

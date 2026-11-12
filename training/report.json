@@ -1,0 +1,234 @@
+{
+ "dataset": {
+  "name": "HaGRIDv2 (512 px mirror testdummyvt/hagRIDv2_512px, test split, one shard per class)",
+  "licence": "HaGRID licence (variant of CC BY-SA 4.0), https://github.com/hukenovs/hagrid/blob/master/license/en_us.pdf",
+  "classMap": {
+   "palm": "OPEN_PALM",
+   "stop": "OPEN_PALM",
+   "fist": "FIST",
+   "one": "POINT",
+   "peace": "TWO_FINGERS",
+   "two_up": "TWO_FINGERS",
+   "like": "THUMB_UP",
+   "dislike": "THUMB_DOWN",
+   "no_gesture": "OTHER",
+   "four": "OTHER",
+   "ok": "OTHER",
+   "call": "OTHER",
+   "rock": "OTHER",
+   "grabbing": "OTHER",
+   "three_gun": "OTHER",
+   "little_finger": "OTHER",
+   "timeout": "OTHER",
+   "mute": "OTHER",
+   "point": "OTHER",
+   "three": "THREE_FINGERS",
+   "three2": "OTHER",
+   "three3": "OTHER"
+  },
+  "samples": 5302,
+  "train": 4245,
+  "val": 1057,
+  "perClass": {
+   "OPEN_PALM": 903,
+   "FIST": 441,
+   "POINT": 440,
+   "TWO_FINGERS": 864,
+   "THREE_FINGERS": 147,
+   "THUMB_UP": 153,
+   "THUMB_DOWN": 155,
+   "OTHER": 2199
+  }
+ },
+ "metrics": {
+  "net": {
+   "valAccuracy": 0.9593,
+   "bestEpoch": 4,
+   "trainSeconds": 18.1,
+   "perClass": {
+    "OPEN_PALM": {
+     "n": 180,
+     "precision": 0.9519,
+     "recall": 0.9889
+    },
+    "FIST": {
+     "n": 88,
+     "precision": 0.9775,
+     "recall": 0.9886
+    },
+    "POINT": {
+     "n": 88,
+     "precision": 0.9318,
+     "recall": 0.9318
+    },
+    "TWO_FINGERS": {
+     "n": 172,
+     "precision": 0.9766,
+     "recall": 0.9709
+    },
+    "THREE_FINGERS": {
+     "n": 29,
+     "precision": 0.9062,
+     "recall": 1.0
+    },
+    "THUMB_UP": {
+     "n": 30,
+     "precision": 0.75,
+     "recall": 1.0
+    },
+    "THUMB_DOWN": {
+     "n": 31,
+     "precision": 0.963,
+     "recall": 0.8387
+    },
+    "OTHER": {
+     "n": 439,
+     "precision": 0.9811,
+     "recall": 0.9453
+    }
+   },
+   "confusion": {
+    "classes": [
+     "OPEN_PALM",
+     "FIST",
+     "POINT",
+     "TWO_FINGERS",
+     "THREE_FINGERS",
+     "THUMB_UP",
+     "THUMB_DOWN",
+     "OTHER"
+    ],
+    "rows_true_cols_pred": [
+     [
+      178,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1
+     ],
+     [
+      1,
+      87,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      1,
+      82,
+      1,
+      0,
+      0,
+      0,
+      4
+     ],
+     [
+      1,
+      0,
+      1,
+      167,
+      1,
+      2,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0,
+      0,
+      29,
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0,
+      0,
+      0,
+      30,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      26,
+      3
+     ],
+     [
+      7,
+      1,
+      4,
+      3,
+      1,
+      7,
+      1,
+      415
+     ]
+    ]
+   }
+  },
+  "app": {
+   "rules": {
+    "accuracy": 0.7569,
+    "recall_by_class": {
+     "OPEN_PALM": 0.9944,
+     "FIST": 0.9659,
+     "POINT": 0.8636,
+     "TWO_FINGERS": 0.936,
+     "THREE_FINGERS": 0.8276,
+     "THUMB_UP": 0.7333,
+     "THUMB_DOWN": 0.7097
+    },
+    "unknown_on_gestures": 0.0469,
+    "wrong_gesture_on_gestures": 0.0324,
+    "false_activation_on_other": 0.4738
+   },
+   "model+rules": {
+    "accuracy": 0.789,
+    "recall_by_class": {
+     "OPEN_PALM": 0.4944,
+     "FIST": 0.9318,
+     "POINT": 0.9091,
+     "TWO_FINGERS": 0.9535,
+     "THREE_FINGERS": 0.8276,
+     "THUMB_UP": 0.6667,
+     "THUMB_DOWN": 0.8065
+    },
+    "unknown_on_gestures": 0.2071,
+    "wrong_gesture_on_gestures": 0.0097,
+    "false_activation_on_other": 0.2027
+   },
+   "model+net+rules": {
+    "accuracy": 0.9073,
+    "recall_by_class": {
+     "OPEN_PALM": 0.9889,
+     "FIST": 0.9318,
+     "POINT": 0.9318,
+     "TWO_FINGERS": 0.9709,
+     "THREE_FINGERS": 1.0,
+     "THUMB_UP": 0.6667,
+     "THUMB_DOWN": 0.8065
+    },
+    "unknown_on_gestures": 0.0485,
+    "wrong_gesture_on_gestures": 0.0081,
+    "false_activation_on_other": 0.1435
+   }
+  },
+  "split": "random stratified 80/20 (seed 7); no subject ids in the mirror"
+ }
+}
